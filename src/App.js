@@ -48,7 +48,8 @@ class App extends Component {
       })
     })
    axios.post(`/shape?shape=${this.state.choice}`, { answer })
-   this.setState({ shape: '', choice: Math.random() * (5 - 1) + 1 })
+   console.log(answer)
+   this.setState({ shape: '', choice: Math.random() * (5 - 1) + 1, active: 0 })
   }
   render() {
     return (
