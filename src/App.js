@@ -1,64 +1,93 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+import _ from 'lodash';
+import styled from 'styled-components';
 import './App.css';
-import axios from 'axios'
-import _ from 'lodash'
 
+const Container = styled.div`
+display: flex;
+width: 100%;
+justify-content: center;
+align-items: center;
+min-height: 60vh;
+`;
+const Btn = styled.button`
+  height: 50px;
+  width: 100px;
+  background-color: coral;
+`;
+const Column = styled.div`
+  flex: 1;
+  display: flex;
+  height: 600px;
+  flex-direction: column;
+`;
+const Square = styled.div`
+  flex: 1;
+  border: 1px solid #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const randomChoice = () => Math.floor((Math.random() * (6 - 1)) + 1);
 class App extends Component {
   state = {
     shape: '',
     active: 0,
-    choice: Math.random() * (5 - 1) + 1,
+    choice: randomChoice(),
   }
-  data = []
   onFetch = () => {
     axios.get(`/shape?shape=${this.state.choice}`)
-      .then(result => this.setState({ shape: result.data.shape }))
+      .then((result) => this.setState({ shape: result.data.shape }));
+  }
+  data = []
+
+  sendData = () => {
+    const answer = [];
+    const maxLength = _.max(this.data.map((item) => item.length));
+    _.times(maxLength, () => {
+      this.data.forEach((item) => {
+        const [popItem] = item.splice(0, 1);
+        popItem && answer.push(popItem); // eslint-disable-line
+      });
+    });
+    axios.post(`/shape?shape=${this.state.choice}`, { answer });
+    this.setState({ shape: '', choice: randomChoice(), active: 0 });
   }
   renderShape = (shape) => {
-    let divIndex = 0
-    this.data = []
-    return  _.times(shape.length, (colIndex) => {
-      this.data.push([])
+    let divIndex = 0;
+    this.data = [];
+    return _.times(shape.length, (colIndex) => {
+      this.data.push([]);
       return (
-        <div style={{ flex: 1, height:600, display: 'flex', flexDirection: 'column' }}  key={colIndex}>
-          {_.times(Number(shape[colIndex]), (index) => {
-            const key = divIndex += 1
-            this.data[colIndex].push(key)
+        <Column key={colIndex}>
+          {_.times(Number(shape[colIndex]), () => {
+            const key = divIndex += 1;
+            this.data[colIndex].push(key);
             return (
-              <div
-                style={{ flex: 1, background: this.state.active === key ? 'red' : '#eee', border: '1px solid green', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                onClick={() => this.setState({ active: key })}
+              <Square
+                style={{ background: this.state.active === key ? 'red' : '#dadada' }}
+                onMouseDown={() => this.setState({ active: key })}
+                onMouseUp={() => this.setState({ active: 0 })}
                 key={key}
               >
                 {key}
-              </div>
-            )
+              </Square>
+            );
           })}
-        </div>
-      )
-    })
+        </Column>
+      );
+    });
   }
-  sendData = (shape) => {
-    const answer = []
-    const maxLength = _.max(this.data.map(item => item.length))
-    _.times(maxLength, () => {
-      this.data.forEach(item => {
-        const [popItem] = item.splice(0, 1)
-        popItem && answer.push(popItem)
-      })
-    })
-   axios.post(`/shape?shape=${this.state.choice}`, { answer })
-   console.log(answer)
-   this.setState({ shape: '', choice: Math.random() * (5 - 1) + 1, active: 0 })
-  }
+
   render() {
     return (
       <div style={{ textAlign: 'center' }} >
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }} >
-          {!this.state.shape && <button onClick={this.onFetch} style={{ height: 50, width: 100, background: 'coral' }} >fetch data</button>}
+        <Container>
+          {!this.state.shape && <Btn onClick={this.onFetch}>fetch data</Btn>}
           {this.state.shape && this.renderShape(this.state.shape)}
-        </div>
-        {this.state.shape && <button onClick={() => this.sendData(this.state.shape)} style={{ height: 50, width: 100, background: 'coral' }} >send</button>}
+        </Container>
+        {this.state.shape && <Btn onClick={() => this.sendData(this.state.shape)}>send</Btn>}
       </div>
 
     );
